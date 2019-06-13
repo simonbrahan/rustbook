@@ -1,3 +1,5 @@
+mod front_of_house;
+
 use front_of_house::hosting;
 use back_of_house::{Appetiser, Breakfast};
 
@@ -28,22 +30,6 @@ mod back_of_house {
     }
 
     fn cook_order() {}
-}
-
-mod front_of_house {
-    pub mod hosting {
-        pub fn add_to_waitlist() {}
-
-        fn seat_at_table() {}
-    }
-
-    pub mod serving {
-        fn take_order() {}
-
-        pub fn serve_order() {}
-
-        fn take_payment() {}
-    }
 }
 
 pub fn eat_at_restaurant() {
