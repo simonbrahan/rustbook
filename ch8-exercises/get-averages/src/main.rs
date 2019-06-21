@@ -24,14 +24,20 @@ fn get_median(input: &[i32]) -> MedianVal {
 fn get_mode(input: &[i32]) -> i32 {
     let mut counts = HashMap::new();
 
+    let mut current_highest = 0;
+    let mut output = 0;
+
     for num in input {
         let count = counts.entry(num).or_insert(0);
         *count += 1;
+
+        if count > &mut current_highest {
+            current_highest = *count;
+            output = *num;
+        }
     }
 
-    dbg!(counts);
-
-    1
+    output
 }
 
 fn main() {
