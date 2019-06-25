@@ -21,19 +21,12 @@ fn pig_latin(input: &str) -> String {
 }
 
 fn pig_latin_word(input: &str) -> String {
-    let mut output = String::new();
-
     if starts_with_vowel(&input) || input.len() == 1 {
-        output.push_str(input);
-        output.push_str("-hay");
+        format!("{}-hay", input)
     } else {
         let capitalised = input.chars().nth(0).unwrap().is_uppercase();
 
-        let old_first: String = if capitalised {
-            input.chars().nth(0).unwrap().to_lowercase().collect()
-        } else {
-            input.chars().nth(0).unwrap().to_string()
-        };
+        let old_first: String = input.chars().nth(0).unwrap().to_lowercase().collect();
 
         let new_first: String = if capitalised {
             input.chars().nth(1).unwrap().to_uppercase().collect()
@@ -43,14 +36,8 @@ fn pig_latin_word(input: &str) -> String {
 
         let rest: String = input.chars().skip(2).collect();
 
-        output.push_str(&new_first);
-        output.push_str(&rest);
-        output.push('-');
-        output.push_str(&old_first);
-        output.push_str("ay");
+        format!("{}{}-{}ay", new_first, rest, old_first)
     }
-
-    output
 }
 
 fn starts_with_vowel(input: &str) -> bool {
