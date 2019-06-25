@@ -1,6 +1,7 @@
 fn main() {
     let test = String::from("The quick brown fox jumps over the lazy dog");
-    let expect = String::from("He-tay uick-qay rown-bay ox-fay umps-jay over-hay he-tay azy-lay og-day");
+    let expect =
+        String::from("He-tay uick-qay rown-bay ox-fay umps-jay over-hay he-tay azy-lay og-day");
     let actual = pig_latin(&test);
 
     if actual != expect {
@@ -43,6 +44,6 @@ fn starts_with_vowel(input: &str) -> bool {
 
     match first_char {
         'a' | 'e' | 'i' | 'o' | 'u' | 'A' | 'E' | 'I' | 'O' | 'U' => true,
-        _ => false
+        _ => false,
     }
 }
