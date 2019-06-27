@@ -7,7 +7,9 @@ struct DataStore {
 
 impl DataStore {
     fn new() -> DataStore {
-        DataStore { departments: HashMap::new() }
+        DataStore {
+            departments: HashMap::new(),
+        }
     }
 
     fn run_instruction(&mut self, instruction: Instruction) -> bool {
@@ -15,17 +17,19 @@ impl DataStore {
             Instruction::Quit => quit_register(),
             Instruction::AddDepartment(department) => self.add_department(&department),
             Instruction::ListDepartments => self.list_departments(),
-            _ => true,
+            Instruction::AddStaffMember { name, department } => self.add_staff(&name, &department),
+            Instruction::ListByDepartment(department) => self.list_department_staff(&department),
+            Instruction::ListAll => self.list_all_staff(),
         }
     }
 
     fn add_department(&mut self, department: &str) -> bool {
         if self.departments.contains_key(department) {
-            println!("Department {} already exists\n", department);
+            println!("## Department {} already exists\n", department);
         } else {
             self.departments.insert(department.to_string(), Vec::new());
 
-            println!("Department {} added\n", department);
+            println!("## Department {} added\n", department);
         }
 
         true
@@ -35,13 +39,64 @@ impl DataStore {
         let mut departments: Vec<&String> = self.departments.keys().collect();
         departments.sort();
 
-        println!("Listing departments:\n");
-
         for department in departments {
             println!("{}", department);
         }
 
-        println!("\nEnd of department list\n");
+        true
+    }
+
+    fn add_staff(&mut self, name: &str, department: &str) -> bool {
+        if !self.departments.contains_key(department) {
+            println!("## Department {} does not exist\n", department);
+        } else {
+            self.departments
+                .get_mut(department)
+                .unwrap()
+                .push(name.to_string());
+
+            println!("## {} added to department {}\n", name, department);
+        }
+
+        true
+    }
+
+    fn list_department_staff(&self, department: &str) -> bool {
+        if !self.departments.contains_key(department) {
+            println!("## Department {} does not exist\n", department);
+            return true;
+        }
+
+        let mut staff: Vec<String> = self.departments.get(department).unwrap().to_vec();
+
+        if staff.is_empty() {
+            println!("## No staff in {}\n", department);
+            return true;
+        }
+
+        staff.sort();
+
+        for staff_member in staff {
+            println!("{}", staff_member);
+        }
+
+        true
+    }
+
+    fn list_all_staff(&self) -> bool {
+        let mut departments: Vec<&String> = self.departments.keys().collect();
+
+        if departments.is_empty() {
+            println!("## No departments");
+            return true;
+        }
+
+        departments.sort();
+
+        for department in departments {
+            println!("## {} staff", department);
+            self.list_department_staff(department);
+        }
 
         true
     }
@@ -57,14 +112,14 @@ enum Instruction {
 }
 
 fn main() {
-    println!("HR register");
+    println!("## HR register");
 
     let mut data = DataStore::new();
 
     loop {
         let instruction = get_instruction();
         if !data.run_instruction(instruction) {
-            println!("Goodbye");
+            println!("## Goodbye");
             break;
         }
     }
