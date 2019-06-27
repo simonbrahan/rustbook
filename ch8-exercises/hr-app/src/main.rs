@@ -7,6 +7,7 @@ enum Instruction {
     AddDepartment(String),
     ListByDepartment(String),
     ListAll,
+    ListDepartments,
     Quit,
 }
 
@@ -45,6 +46,10 @@ fn get_instruction() -> Instruction {
             return Instruction::ListAll;
         }
 
+        if instruction_string == "list departments" {
+            return Instruction::ListDepartments;
+        }
+
         let instruction_parts: Vec<&str> = instruction_string.split_whitespace().collect();
 
         if instruction_parts.len() == 2 && instruction_parts[0] == "list" {
@@ -74,6 +79,7 @@ fn get_instruction() -> Instruction {
                 add department DEPARTMENT name
                 list all
                 list DEPARTMENT NAME
+                list departments
                 quit"
         );
     }
@@ -81,7 +87,40 @@ fn get_instruction() -> Instruction {
 
 fn run_instruction(data: &mut HashMap<String, Vec<String>>, instruction: Instruction) -> bool {
     match instruction {
-        Instruction::Quit => false,
+        Instruction::Quit => quit_register(),
+        Instruction::AddDepartment(department) => add_department(data, &department),
+        Instruction::ListDepartments => list_departments(data),
         _ => true,
     }
+}
+
+fn quit_register() -> bool {
+    false
+}
+
+fn add_department(data: &mut HashMap<String, Vec<String>>, department: &str) -> bool {
+    if data.contains_key(department) {
+        println!("Department {} already exists\n", department);
+    } else {
+        data.insert(department.to_string(), Vec::new());
+
+        println!("Department {} added\n", department);
+    }
+
+    true
+}
+
+fn list_departments(data: &mut HashMap<String, Vec<String>>) -> bool {
+    let mut departments: Vec<&String> = data.keys().collect();
+    departments.sort();
+
+    println!("Listing departments:\n");
+
+    for department in departments {
+        println!("{}", department);
+    }
+
+    println!("\nEnd of department list\n");
+
+    true
 }
