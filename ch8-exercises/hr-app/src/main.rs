@@ -1,7 +1,52 @@
 use std::collections::HashMap;
 use std::io;
 
-#[derive(Debug)]
+struct DataStore {
+    departments: HashMap<String, Vec<String>>,
+}
+
+impl DataStore {
+    fn new() -> DataStore {
+        DataStore { departments: HashMap::new() }
+    }
+
+    fn run_instruction(&mut self, instruction: Instruction) -> bool {
+        match instruction {
+            Instruction::Quit => quit_register(),
+            Instruction::AddDepartment(department) => self.add_department(&department),
+            Instruction::ListDepartments => self.list_departments(),
+            _ => true,
+        }
+    }
+
+    fn add_department(&mut self, department: &str) -> bool {
+        if self.departments.contains_key(department) {
+            println!("Department {} already exists\n", department);
+        } else {
+            self.departments.insert(department.to_string(), Vec::new());
+
+            println!("Department {} added\n", department);
+        }
+
+        true
+    }
+
+    fn list_departments(&self) -> bool {
+        let mut departments: Vec<&String> = self.departments.keys().collect();
+        departments.sort();
+
+        println!("Listing departments:\n");
+
+        for department in departments {
+            println!("{}", department);
+        }
+
+        println!("\nEnd of department list\n");
+
+        true
+    }
+}
+
 enum Instruction {
     AddStaffMember { name: String, department: String },
     AddDepartment(String),
@@ -14,12 +59,11 @@ enum Instruction {
 fn main() {
     println!("HR register");
 
-    let mut data = HashMap::new();
+    let mut data = DataStore::new();
 
     loop {
         let instruction = get_instruction();
-        println!("{:?}", instruction);
-        if !run_instruction(&mut data, instruction) {
+        if !data.run_instruction(instruction) {
             println!("Goodbye");
             break;
         }
@@ -85,42 +129,6 @@ fn get_instruction() -> Instruction {
     }
 }
 
-fn run_instruction(data: &mut HashMap<String, Vec<String>>, instruction: Instruction) -> bool {
-    match instruction {
-        Instruction::Quit => quit_register(),
-        Instruction::AddDepartment(department) => add_department(data, &department),
-        Instruction::ListDepartments => list_departments(data),
-        _ => true,
-    }
-}
-
 fn quit_register() -> bool {
     false
-}
-
-fn add_department(data: &mut HashMap<String, Vec<String>>, department: &str) -> bool {
-    if data.contains_key(department) {
-        println!("Department {} already exists\n", department);
-    } else {
-        data.insert(department.to_string(), Vec::new());
-
-        println!("Department {} added\n", department);
-    }
-
-    true
-}
-
-fn list_departments(data: &mut HashMap<String, Vec<String>>) -> bool {
-    let mut departments: Vec<&String> = data.keys().collect();
-    departments.sort();
-
-    println!("Listing departments:\n");
-
-    for department in departments {
-        println!("{}", department);
-    }
-
-    println!("\nEnd of department list\n");
-
-    true
 }
