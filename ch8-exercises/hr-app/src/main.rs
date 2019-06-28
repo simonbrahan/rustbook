@@ -12,66 +12,68 @@ impl DataStore {
         }
     }
 
-    fn run_instruction(&mut self, instruction: Instruction) -> bool {
+    fn run_instruction(&mut self, instruction: Instruction) {
         match instruction {
-            Instruction::Quit => quit_register(),
             Instruction::AddDepartment(department) => self.add_department(&department),
             Instruction::ListDepartments => self.list_departments(),
             Instruction::AddStaffMember { name, department } => self.add_staff(&name, &department),
             Instruction::ListByDepartment(department) => self.list_department_staff(&department),
             Instruction::ListAll => self.list_all_staff(),
+            _ => (),
         }
     }
 
-    fn add_department(&mut self, department: &str) -> bool {
+    fn add_department(&mut self, department: &str) {
         if self.departments.contains_key(department) {
             println!("## Department {} already exists\n", department);
-        } else {
-            self.departments.insert(department.to_string(), Vec::new());
-
-            println!("## Department {} added\n", department);
+            return;
         }
 
-        true
+        self.departments.insert(department.to_string(), Vec::new());
+
+        println!("## Department {} added\n", department);
     }
 
-    fn list_departments(&self) -> bool {
+    fn list_departments(&self) {
         let mut departments: Vec<&String> = self.departments.keys().collect();
+
+        if departments.is_empty() {
+            println!("## No departments");
+            return;
+        }
+
         departments.sort();
 
         for department in departments {
             println!("{}", department);
         }
-
-        true
     }
 
-    fn add_staff(&mut self, name: &str, department: &str) -> bool {
+    fn add_staff(&mut self, name: &str, department: &str) {
         if !self.departments.contains_key(department) {
             println!("## Department {} does not exist\n", department);
-        } else {
-            self.departments
-                .get_mut(department)
-                .unwrap()
-                .push(name.to_string());
-
-            println!("## {} added to department {}\n", name, department);
+            return;
         }
 
-        true
+        self.departments
+            .get_mut(department)
+            .unwrap()
+            .push(name.to_string());
+
+        println!("## {} added to department {}\n", name, department);
     }
 
-    fn list_department_staff(&self, department: &str) -> bool {
+    fn list_department_staff(&self, department: &str) {
         if !self.departments.contains_key(department) {
             println!("## Department {} does not exist\n", department);
-            return true;
+            return;
         }
 
         let mut staff: Vec<String> = self.departments.get(department).unwrap().to_vec();
 
         if staff.is_empty() {
             println!("## No staff in {}\n", department);
-            return true;
+            return;
         }
 
         staff.sort();
@@ -79,16 +81,14 @@ impl DataStore {
         for staff_member in staff {
             println!("{}", staff_member);
         }
-
-        true
     }
 
-    fn list_all_staff(&self) -> bool {
+    fn list_all_staff(&self) {
         let mut departments: Vec<&String> = self.departments.keys().collect();
 
         if departments.is_empty() {
             println!("## No departments");
-            return true;
+            return;
         }
 
         departments.sort();
@@ -97,8 +97,6 @@ impl DataStore {
             println!("## {} staff", department);
             self.list_department_staff(department);
         }
-
-        true
     }
 }
 
@@ -118,11 +116,15 @@ fn main() {
 
     loop {
         let instruction = get_instruction();
-        if !data.run_instruction(instruction) {
-            println!("## Goodbye");
+
+        if let Instruction::Quit = instruction {
             break;
         }
+
+        data.run_instruction(instruction);
     }
+
+    println!("Goodbye");
 }
 
 fn get_instruction() -> Instruction {
@@ -175,15 +177,11 @@ fn get_instruction() -> Instruction {
         println!(
             "Invalid instruction. Valid instructions:
                 add STAFF NAME to DEPARTMENT NAME
-                add department DEPARTMENT name
+                add department DEPARTMENT NAME
                 list all
                 list DEPARTMENT NAME
                 list departments
                 quit"
         );
     }
-}
-
-fn quit_register() -> bool {
-    false
 }
