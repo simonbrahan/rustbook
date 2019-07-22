@@ -1,10 +1,12 @@
 use std::error::Error;
 use std::fs;
+use std::env;
 
 #[derive(Debug)]
 pub struct Config {
     pub query: String,
     pub filename: String,
+    pub case_sensitive: bool,
 }
 
 impl Config {
@@ -15,15 +17,22 @@ impl Config {
 
         let query = args[1].clone();
         let filename = args[2].clone();
+        let case_sensitive = env::var("MINIGREP_CASE_INSENSITIVE").is_err();
 
-        Ok(Config { query, filename })
+        Ok(Config { query, filename, case_sensitive })
     }
 }
 
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     let contents = fs::read_to_string(config.filename)?;
 
-    for line in search(&config.query, &contents) {
+    let output = if config.case_sensitive {
+        search(&config.query, &contents)
+    } else {
+        search_case_insensitive(&config.query, &contents)
+    };
+
+    for line in output {
         println!("{}", line);
     }
 
@@ -35,6 +44,19 @@ pub fn search<'a>(query: &str, content: &'a str) -> Vec<&'a str> {
 
     for line in content.lines() {
         if line.contains(query) {
+            output.push(line);
+        }
+    }
+
+    output
+}
+
+pub fn search_case_insensitive<'a>(query: &str, content: &'a str) -> Vec<&'a str> {
+    let query = query.to_lowercase();
+    let mut output = Vec::new();
+
+    for line in content.lines() {
+        if line.to_lowercase().contains(&query) {
             output.push(line);
         }
     }
@@ -73,7 +95,7 @@ mod tests {
     }
 
     #[test]
-    fn search_returns_one_result() {
+    fn case_sensitive_search_returns_one_result() {
         let query = "duct";
         let content = "
 Rust:
@@ -84,7 +106,7 @@ Pick three.";
     }
 
     #[test]
-    fn search_returns_many_results() {
+    fn case_sensitive_search_returns_many_results() {
         let query = "duct";
         let content = "
 Rust:
@@ -99,11 +121,21 @@ Includes duct tape.";
     }
 
     #[test]
-    fn search_returns_no_results() {
+    fn case_sensitive_search_returns_no_results() {
         let query = "duct";
         let content = "Content does not include the search query.";
 
         let expect: Vec<&str> = vec![];
         assert_eq!(expect, search(query, content));
+    }
+
+    #[test]
+    fn case_insensitive_search_returns_one_result() {
+        let query = "duct";
+        let content = "
+Duct tape.
+It's my favourite tape.";
+
+        assert_eq!(vec!["Duct tape."], search_case_insensitive(query, content));
     }
 }
