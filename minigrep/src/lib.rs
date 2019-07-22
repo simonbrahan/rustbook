@@ -12,12 +12,16 @@ pub struct Config {
 impl Config {
     pub fn new(args: &[String]) -> Result<Config, &'static str> {
         if args.len() < 3 {
-            return Err("Two arguments required: search term, file path");
+            return Err("At least two arguments required: search term, file path");
         }
 
         let query = args[1].clone();
         let filename = args[2].clone();
-        let case_sensitive = env::var("MINIGREP_CASE_INSENSITIVE").is_err();
+
+        let insensitive_flag_passed = args.len() > 3 && args[3] == "i";
+        let case_sensitive = env::var("MINIGREP_CASE_INSENSITIVE").is_err() && !insensitive_flag_passed;
+
+
 
         Ok(Config { query, filename, case_sensitive })
     }
@@ -83,13 +87,24 @@ mod tests {
     }
 
     #[test]
+    fn build_config_with_passed_case_insensitive() {
+        let args: Vec<String> = vec![String::from("unused exec path"), String::from("test query"), String::from("path/to/file.txt"), String::from("i")];
+
+        let conf = Config::new(&args).expect("Should be a Config struct");
+
+        assert_eq!("test query", conf.query);
+        assert_eq!("path/to/file.txt", conf.filename);
+        assert!(!conf.case_sensitive);
+    }
+
+    #[test]
     fn build_config_fails_with_fewer_args() {
         let args: Vec<String> = vec![String::from("unused exec path"), String::from("test query")];
 
         let err = Config::new(&args);
 
         assert_eq!(
-            "Two arguments required: search term, file path",
+            "At least two arguments required: search term, file path",
             err.expect_err("Should error because too few args")
         );
     }
