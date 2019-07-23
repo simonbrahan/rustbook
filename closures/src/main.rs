@@ -1,6 +1,6 @@
+use std::collections::HashMap;
 use std::thread;
 use std::time::Duration;
-use std::collections::HashMap;
 
 struct Cacher<T>
 where
@@ -22,11 +22,14 @@ where
     }
 
     fn value(&mut self, arg: u32) -> u32 {
-        if !self.values.contains_key(&arg) {
-            self.values.insert(arg, (self.calculation)(arg));
+        match self.values.get(&arg) {
+            Some(val) => *val,
+            None => {
+                let val = (self.calculation)(arg);
+                self.values.insert(arg, val);
+                val
+            }
         }
-
-        *self.values.get(&arg).unwrap()
     }
 }
 
