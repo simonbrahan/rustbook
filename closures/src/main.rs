@@ -38,6 +38,18 @@ fn main() {
     let rand_num = 7;
 
     generate_workout(user_spec_val, rand_num);
+
+    //Closure using environment
+
+    let x = vec![1, 2, 3];
+
+    let equal_to_x = |num| num == x;
+
+    println!("There was an attempt to use x: {:?}", x);
+
+    let y = vec![1, 2, 3];
+
+    assert!(equal_to_x(y));
 }
 
 fn generate_workout(intensity: u32, random_number: u32) {
