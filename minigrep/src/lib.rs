@@ -1,6 +1,6 @@
+use std::env;
 use std::error::Error;
 use std::fs;
-use std::env;
 
 #[derive(Debug)]
 pub struct Config {
@@ -19,11 +19,14 @@ impl Config {
         let filename = args[2].clone();
 
         let insensitive_flag_passed = args.len() > 3 && args[3] == "i";
-        let case_sensitive = env::var("MINIGREP_CASE_INSENSITIVE").is_err() && !insensitive_flag_passed;
+        let case_sensitive =
+            env::var("MINIGREP_CASE_INSENSITIVE").is_err() && !insensitive_flag_passed;
 
-
-
-        Ok(Config { query, filename, case_sensitive })
+        Ok(Config {
+            query,
+            filename,
+            case_sensitive,
+        })
     }
 }
 
@@ -44,28 +47,19 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
 }
 
 pub fn search<'a>(query: &str, content: &'a str) -> Vec<&'a str> {
-    let mut output = Vec::new();
-
-    for line in content.lines() {
-        if line.contains(query) {
-            output.push(line);
-        }
-    }
-
-    output
+    content
+        .lines()
+        .filter(|line| line.contains(query))
+        .collect()
 }
 
 pub fn search_case_insensitive<'a>(query: &str, content: &'a str) -> Vec<&'a str> {
     let query = query.to_lowercase();
-    let mut output = Vec::new();
 
-    for line in content.lines() {
-        if line.to_lowercase().contains(&query) {
-            output.push(line);
-        }
-    }
-
-    output
+    content
+        .lines()
+        .filter(|line| line.to_lowercase().contains(&query))
+        .collect()
 }
 
 #[cfg(test)]
@@ -88,7 +82,12 @@ mod tests {
 
     #[test]
     fn build_config_with_passed_case_insensitive() {
-        let args: Vec<String> = vec![String::from("unused exec path"), String::from("test query"), String::from("path/to/file.txt"), String::from("i")];
+        let args: Vec<String> = vec![
+            String::from("unused exec path"),
+            String::from("test query"),
+            String::from("path/to/file.txt"),
+            String::from("i"),
+        ];
 
         let conf = Config::new(&args).expect("Should be a Config struct");
 
