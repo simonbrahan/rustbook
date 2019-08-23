@@ -16,5 +16,8 @@ fn main() {
     assert_eq!("Draft pending review", post.content());
 
     post.approve();
+    assert_eq!("Draft pending review", post.content());
+
+    post.approve();
     assert_eq!("I ate salad for lunch", post.content());
 }
