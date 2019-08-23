@@ -33,11 +33,19 @@ impl Post {
             self.state = Some(s.approve());
         }
     }
+
+    pub fn reject(&mut self) {
+        // Take ownership of state to prevent another part of the app keeping the old value
+        if let Some(s) = self.state.take() {
+            self.state = Some(s.reject());
+        }
+    }
 }
 
 trait State {
     fn request_review(self: Box<Self>) -> Box<dyn State>;
     fn approve(self: Box<Self>) -> Box<dyn State>;
+    fn reject(self: Box<Self>) -> Box<dyn State>;
 
     fn content<'a>(&self, post: &'a Post) -> &'a str {
         ""
@@ -55,6 +63,10 @@ impl State for Draft {
         self
     }
 
+    fn reject(self: Box<Self>) -> Box<dyn State> {
+        self
+    }
+
     fn content<'a>(&self, post: &'a Post) -> &'a str {
         "Unpublished draft"
     }
@@ -65,6 +77,10 @@ struct PendingReview {}
 impl State for PendingReview {
     fn request_review(self: Box<Self>) -> Box<dyn State> {
         self
+    }
+
+    fn reject(self: Box<Self>) -> Box<dyn State> {
+        Box::new(Draft {})
     }
 
     fn approve(self: Box<Self>) -> Box<dyn State> {
@@ -84,6 +100,10 @@ impl State for Published {
     }
 
     fn approve(self: Box<Self>) -> Box<dyn State> {
+        self
+    }
+
+    fn reject(self: Box<Self>) -> Box<dyn State> {
         self
     }
 

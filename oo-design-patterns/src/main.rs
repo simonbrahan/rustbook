@@ -9,6 +9,12 @@ fn main() {
     post.request_review();
     assert_eq!("Draft pending review", post.content());
 
+    post.reject();
+    assert_eq!("Unpublished draft", post.content());
+
+    post.request_review();
+    assert_eq!("Draft pending review", post.content());
+
     post.approve();
     assert_eq!("I ate salad for lunch", post.content());
 }
