@@ -12,8 +12,13 @@ impl Post {
         }
     }
 
-    pub fn add_text(&mut self, text: &str) {
-        self.content.push_str(text);
+    pub fn add_text(&mut self, text: &str) -> Result<(), ()> {
+        if self.state.as_ref().unwrap().can_add_text() {
+            self.content.push_str(text);
+            Ok(())
+        } else {
+            Err(())
+        }
     }
 
     pub fn content(&self) -> &str {
@@ -50,6 +55,10 @@ trait State {
     fn content<'a>(&self, post: &'a Post) -> &'a str {
         ""
     }
+
+    fn can_add_text(&self) -> bool {
+        false
+    }
 }
 
 struct Draft {}
@@ -72,6 +81,10 @@ impl State for Draft {
 
     fn content<'a>(&self, post: &'a Post) -> &'a str {
         "Unpublished draft"
+    }
+
+    fn can_add_text(&self) -> bool {
+        true
     }
 }
 
