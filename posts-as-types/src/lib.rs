@@ -1,3 +1,8 @@
+pub enum MaybePublished {
+    Published(Post),
+    NotPublished(PendingReviewPost),
+}
+
 pub struct Post {
     content: String,
 }
@@ -26,18 +31,27 @@ impl DraftPost {
     pub fn request_review(self) -> PendingReviewPost {
         PendingReviewPost {
             content: self.content,
+            num_approvals: 0,
         }
     }
 }
 
 pub struct PendingReviewPost {
     content: String,
+    num_approvals: u32,
 }
 
 impl PendingReviewPost {
-    pub fn approve(self) -> Post {
-        Post {
-            content: self.content,
+    pub fn approve(self) -> MaybePublished {
+        if self.num_approvals > 0 {
+            MaybePublished::Published(Post {
+                content: self.content,
+            })
+        } else {
+            MaybePublished::NotPublished(PendingReviewPost {
+                content: self.content,
+                num_approvals: self.num_approvals + 1,
+            })
         }
     }
 
