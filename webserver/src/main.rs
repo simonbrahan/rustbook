@@ -11,6 +11,12 @@ fn handle_connection(mut stream: TcpStream) {
     stream.read(&mut buffer).unwrap();
 
     println!("Request: {}", String::from_utf8_lossy(&buffer[..]));
+
+    stream
+        .write_all("HTTP/1.1 200 OK\r\n\r\nHello".as_bytes())
+        .unwrap();
+
+    stream.flush().unwrap();
 }
 
 fn main() {
