@@ -1,3 +1,4 @@
+use std::fs;
 use std::io::prelude::*;
 use std::net::TcpListener;
 use std::net::TcpStream;
@@ -10,11 +11,15 @@ fn handle_connection(mut stream: TcpStream) {
     // since the stream is never large enough to fill the buffer.
     stream.read(&mut buffer).unwrap();
 
-    println!("Request: {}", String::from_utf8_lossy(&buffer[..]));
+    let contents = fs::read_to_string("webpages/hello.html").unwrap();
 
-    stream
-        .write_all("HTTP/1.1 200 OK\r\n\r\nHello".as_bytes())
-        .unwrap();
+    let headers = vec!["HTTP/1.1 200 OK", "Content-Type: text/html; charset=utf-8"];
+
+    let head_string = headers.join("\r\n");
+
+    let response = format!("{}\r\n\r\n{}", head_string, contents);
+
+    stream.write_all(response.as_bytes()).unwrap();
 
     stream.flush().unwrap();
 }
