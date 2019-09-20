@@ -13,15 +13,19 @@ fn handle_connection(mut stream: TcpStream) {
 
     let contents = fs::read_to_string("webpages/hello.html").unwrap();
 
-    let headers = vec!["HTTP/1.1 200 OK", "Content-Type: text/html; charset=utf-8"];
-
-    let head_string = headers.join("\r\n");
-
-    let response = format!("{}\r\n\r\n{}", head_string, contents);
+    let response = build_response(&contents);
 
     stream.write_all(response.as_bytes()).unwrap();
 
     stream.flush().unwrap();
+}
+
+fn build_response(contents: &str) -> String {
+    let headers = vec!["HTTP/1.1 200 OK", "Content-Type: text/html; charset=utf-8"];
+
+    let head_string = headers.join("\r\n");
+
+    format!("{}\r\n\r\n{}", head_string, contents).to_string()
 }
 
 fn main() {
