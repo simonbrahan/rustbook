@@ -11,19 +11,30 @@ fn handle_connection(mut stream: TcpStream) {
     // since the stream is never large enough to fill the buffer.
     stream.read(&mut buffer).unwrap();
 
-    let contents = fs::read_to_string("webpages/hello.html").unwrap();
+    let get = b"GET / HTTP/1.1\r\n";
 
-    let response = build_response(&contents);
+    let (status, filename) = if buffer.starts_with(get) {
+        ("200 OK", "hello.html")
+    } else {
+        ("404 Not Found", "404.html")
+    };
+
+    let response = build_response(status, filename);
 
     stream.write_all(response.as_bytes()).unwrap();
 
     stream.flush().unwrap();
 }
 
-fn build_response(contents: &str) -> String {
-    let headers = vec!["HTTP/1.1 200 OK", "Content-Type: text/html; charset=utf-8"];
+fn build_response(status: &str, filename: &str) -> String {
+    let headers = vec![
+        format!("HTTP/1.1 {}", status),
+        "Content-Type: text/html; charset=utf-8".to_string(),
+    ];
 
     let head_string = headers.join("\r\n");
+
+    let contents = fs::read_to_string(format!("webpages/{}", filename)).unwrap();
 
     format!("{}\r\n\r\n{}", head_string, contents).to_string()
 }
