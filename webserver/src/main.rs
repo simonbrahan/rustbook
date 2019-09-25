@@ -5,6 +5,23 @@ use std::net::TcpStream;
 use std::thread;
 use std::time::Duration;
 
+struct ThreadPool {
+    max_threads: usize,
+}
+
+impl ThreadPool {
+    fn new(max_threads: usize) -> ThreadPool {
+        ThreadPool { max_threads }
+    }
+
+    fn execute<F>(&self, process: F)
+    where
+        F: FnOnce() + Send + 'static,
+    {
+        thread::spawn(process);
+    }
+}
+
 fn handle_connection(mut stream: TcpStream) {
     let mut buffer = [0; 512];
 
@@ -47,11 +64,12 @@ fn build_response(status: &str, filename: &str) -> String {
 
 fn main() {
     let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
+    let pool = ThreadPool::new(4);
 
     for stream in listener.incoming() {
         let stream = stream.unwrap();
 
-        thread::spawn(|| {
+        pool.execute(|| {
             handle_connection(stream);
         });
     }
