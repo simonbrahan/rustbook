@@ -2,23 +2,78 @@ use std::fs;
 use std::io::prelude::*;
 use std::net::TcpListener;
 use std::net::TcpStream;
+use std::sync::mpsc;
+use std::sync::Arc;
+use std::sync::Mutex;
 use std::thread;
 use std::time::Duration;
 
+trait FnBox {
+    fn call_box(self: Box<Self>);
+}
+
+impl<F: FnOnce()> FnBox for F {
+    fn call_box(self: Box<F>) {
+        (*self)()
+    }
+}
+
+type Job = Box<dyn FnBox + Send + 'static>;
+
+struct Worker {
+    id: usize,
+    thread_handle: thread::JoinHandle<()>,
+}
+
+impl Worker {
+    fn new(id: usize, receiver: Arc<Mutex<mpsc::Receiver<Job>>>) -> Worker {
+        Worker {
+            id,
+            thread_handle: thread::spawn(move || loop {
+                let job = receiver.lock().unwrap().recv().unwrap();
+
+                println!("Worker {} running", id);
+
+                job.call_box();
+            }),
+        }
+    }
+}
+
 struct ThreadPool {
-    max_threads: usize,
+    workers: Vec<Worker>,
+    sender: mpsc::Sender<Job>,
 }
 
 impl ThreadPool {
-    fn new(max_threads: usize) -> ThreadPool {
-        ThreadPool { max_threads }
+    /// Create a new ThreadPool
+    ///
+    /// `max_workers` is the maximum number of active workers in the ThreadPool
+    ///
+    /// # Panics
+    ///
+    /// Will panic if `max_workers` is zero.
+    fn new(max_workers: usize) -> ThreadPool {
+        assert!(max_workers > 0);
+
+        let (sender, receiver) = mpsc::channel();
+        let receiver = Arc::new(Mutex::new(receiver));
+
+        let mut workers = Vec::with_capacity(max_workers);
+
+        for id in 0..max_workers {
+            workers.push(Worker::new(id, Arc::clone(&receiver)));
+        }
+
+        ThreadPool { workers, sender }
     }
 
     fn execute<F>(&self, process: F)
     where
         F: FnOnce() + Send + 'static,
     {
-        thread::spawn(process);
+        let job = Box::new(process);
+        self.sender.send(job).unwrap();
     }
 }
 
@@ -31,7 +86,7 @@ fn handle_connection(mut stream: TcpStream) {
     stream.read(&mut buffer).unwrap();
 
     let get = b"GET / HTTP/1.1\r\n";
-    let sleep = b"GET /sleep HTTP/1.1\r\n";
+    let sleep = b"GET /sleep";
 
     let (status, filename) = if buffer.starts_with(get) {
         ("200 OK", "hello.html")
